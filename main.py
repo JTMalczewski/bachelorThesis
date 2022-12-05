@@ -1,11 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from numba import njit
 from fun import *
 import scipy.sparse.linalg as sp
 from scipy.sparse import csc_matrix
 
-@njit
 def generateMatrix(Nx,Ny,dx,dy,n,k):
     def idx1D(i , j, N):
         return i * N + j
@@ -33,7 +31,6 @@ def generateMatrix(Nx,Ny,dx,dy,n,k):
             temp[idx1D(i, j, Ny), idx1D(i - 1, j, Ny)] = 1/dx**2
     return temp
 
-@njit
 def pinv(matrix):
     return np.linalg.pinv(matrix) 
 
