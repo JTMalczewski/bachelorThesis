@@ -97,10 +97,10 @@ def generateMatrix(Nx,Ny,dx,dy,n,k):
 
     return temp_var, temp_x, temp_y
 
-Ny = 2001
-Nx = 3001
-dx = 0.001
-dy = 0.001
+Ny = 201 #mm
+Nx = 201 #mm
+dx = 0.001 #m
+dy = 0.001 #m
 k = 6.28/0.012
 n = np.ones((Nx,Ny),dtype=np.csingle)
 f = np.zeros((Nx*Ny),dtype=np.csingle)
@@ -115,11 +115,11 @@ metal =     (1,     0,  1e7,    0)
 placeSource(Nx//2,Ny//2,f,100)
 addContour(concrete,30,2.4,n)
 
-wall = generateWall(Nx//3,0,Ny//3*2,100,False)
+wall = generateWall(Nx//3,0,Ny//3*2,10,False)
 n = addWall(n,wall,2.4,concrete)
 printWall(wall)
 
-wall = generateWall(Nx//3*2,Ny//3,Ny//3*2,100,False)
+wall = generateWall(Nx//3*2,Ny//3,Ny//3*2,10,False)
 n = addWall(n,wall,2.4,concrete)
 printWall(wall)
 
