@@ -31,22 +31,23 @@ def addContour(material,thickness,GHz,n):
     return n
 
 def printWall(wall):
-    plt.scatter(np.array(wall).T[0],np.array(wall).T[1], color='white', alpha=0.5)
+    return
+    # plt.scatter(np.array(wall).T[0],np.array(wall).T[1], color='white', alpha=0.5)
 
-def generateWall(startPointX, startPointY, length, radius, xAxes):
+def generateWall(startPointX, startPointY, length, thickness, xAxes):
     wall = []
     if xAxes:
         for i in range(length):
-            for j in range(radius):
+            for j in range(thickness):
                 wall.append([
                     startPointX+i,
-                    int(startPointY-radius/2+j)
+                    int(startPointY-thickness/2+j)
                 ])
     else:
         for i in range(length):
-            for j in range(radius):
+            for j in range(thickness):
                 wall.append([
-                    int(startPointX-radius/2+j),
+                    int(startPointX-thickness/2+j),
                     startPointY+i
                 ])
     return wall
@@ -97,11 +98,11 @@ def generateMatrix(Nx,Ny,dx,dy,n,k):
 
     return temp_var, temp_x, temp_y
 
-Ny = 201 #mm
-Nx = 201 #mm
-dx = 0.001 #m
-dy = 0.001 #m
-k = 6.28/0.012
+Ny = 401 #cm
+Nx = 1201 #cm
+dx = 0.005 #m
+dy = 0.005 #m
+k = 6.28/0.12
 n = np.ones((Nx,Ny),dtype=np.csingle)
 f = np.zeros((Nx*Ny),dtype=np.csingle)
 E_2D = np.zeros((Nx,Ny),dtype=np.csingle)
@@ -112,14 +113,18 @@ wood =      (1.99,  0,  0.0047, 1.0718)
 glass =     (6.31,  0,  0.0036, 1.3394)
 metal =     (1,     0,  1e7,    0)
 
-placeSource(Nx//2,Ny//2,f,100)
-addContour(concrete,30,2.4,n)
+placeSource(Nx//2,Ny//2,f,1000)
+placeSource(Nx//2+1,Ny//2,f,1000)
+placeSource(Nx//2,Ny//2+1,f,1000)
+placeSource(Nx//2+1,Ny//2+1,f,1000)
 
-wall = generateWall(Nx//3,0,Ny//3*2,10,False)
+addContour(concrete,10,2.4,n)
+
+wall = generateWall(Nx//3,0,Ny//3*2,5,False)
 n = addWall(n,wall,2.4,concrete)
 printWall(wall)
 
-wall = generateWall(Nx//3*2,Ny//3,Ny//3*2,10,False)
+wall = generateWall(Nx//3*2,Ny//3,Ny//3*2,5,False)
 n = addWall(n,wall,2.4,concrete)
 printWall(wall)
 
@@ -133,11 +138,11 @@ E_2D = np.reshape(E_1D,(Nx,Ny))
 #     f.write(str(E_2D[i]))
 # f.close()
 
-plt.imshow((abs(E_2D)).T, 'gist_heat')
-plt.colorbar()
-plt.xlabel('x [mm]')
-plt.ylabel('y [mm]')
-plt.title('abs($\Psi$)')
-plt.savefig('E_{}_{}_mm.png'.format(Nx,Ny))
+plt.imshow((abs(E_2D)).T)
+# plt.colorbar()
+plt.xlabel('x [cm]')
+plt.ylabel('y [cm]')
+plt.title('abs($\Psi$) dla dx={}'.format(dx*100))
+plt.savefig('E_{}x{}cm_dx_{}cm.png'.format(Nx,Ny,dx*100))
 
 
