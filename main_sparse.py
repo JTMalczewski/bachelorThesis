@@ -13,26 +13,25 @@ def placeSource(X,Y,f,power):
 def addContour(material,thickness,GHz,n):
     radius = thickness//2
 
-    wall = generateWall(0,radius//2,int(Nx),radius,True)
-    n = addWall(n,wall,2.4,material)
+    wall = generateWall(0,radius,int(Nx),radius,True)
+    n = addWall(n,wall,GHz,material)
     printWall(wall)
 
     wall = generateWall(0,Ny-radius//2,int(Nx),radius,True)
-    n = addWall(n,wall,2.4,material)
+    n = addWall(n,wall,GHz,material)
     printWall(wall)
 
-    wall = generateWall(radius//2,0,int(Ny),radius,False)
-    n = addWall(n,wall,2.4,material)
+    wall = generateWall(radius,0,int(Ny),radius,False)
+    n = addWall(n,wall,GHz,material)
     printWall(wall)
 
     wall = generateWall(Nx-radius//2,0,int(Ny),radius,False)
-    n = addWall(n,wall,2.4,material)
+    n = addWall(n,wall,GHz,material)
     printWall(wall)
     return n
 
 def printWall(wall):
-    return
-    # plt.scatter(np.array(wall).T[0],np.array(wall).T[1], color='white', alpha=0.5)
+    plt.scatter(np.array(wall).T[0],np.array(wall).T[1], color='black', alpha=0.2, marker=',',lw=0, s=1)
 
 def generateWall(startPointX, startPointY, length, thickness, xAxes):
     wall = []
@@ -98,10 +97,12 @@ def generateMatrix(Nx,Ny,dx,dy,n,k):
 
     return temp_var, temp_x, temp_y
 
-Ny = 401 #cm
-Nx = 1201 #cm
-dx = 0.005 #m
-dy = 0.005 #m
+X = 12 #m
+Y = 4 #m
+dx = 0.01 #m
+dy = 0.01 #m
+Ny = int(Y/dy)
+Nx = int(X/dx)
 k = 6.28/0.12
 n = np.ones((Nx,Ny),dtype=np.csingle)
 f = np.zeros((Nx*Ny),dtype=np.csingle)
@@ -114,11 +115,11 @@ glass =     (6.31,  0,  0.0036, 1.3394)
 metal =     (1,     0,  1e7,    0)
 
 placeSource(Nx//2,Ny//2,f,1000)
-placeSource(Nx//2+1,Ny//2,f,1000)
-placeSource(Nx//2,Ny//2+1,f,1000)
-placeSource(Nx//2+1,Ny//2+1,f,1000)
+# placeSource(Nx//2+1,Ny//2,f,1000)
+# placeSource(Nx//2,Ny//2+1,f,1000)
+# placeSource(Nx//2+1,Ny//2+1,f,1000)
 
-addContour(concrete,10,2.4,n)
+addContour(concrete,20,2.4,n)
 
 wall = generateWall(Nx//3,0,Ny//3*2,5,False)
 n = addWall(n,wall,2.4,concrete)
@@ -133,16 +134,39 @@ matrix_sparse = csc_matrix((var,(coordinates_x, coordinates_y)))
 E_1D = spsolve(matrix_sparse,f)
 E_2D = np.reshape(E_1D,(Nx,Ny))
 
-# f = open("data_2.txt", "a")
-# for i in range(Nx):
-#     f.write(str(E_2D[i]))
-# f.close()
-
-plt.imshow((abs(E_2D)).T)
-# plt.colorbar()
-plt.xlabel('x [cm]')
-plt.ylabel('y [cm]')
-plt.title('abs($\Psi$) dla dx={}'.format(dx*100))
-plt.savefig('E_{}x{}cm_dx_{}cm.png'.format(Nx,Ny,dx*100))
+# plt.imshow((np.real(E_2D)).T, 'binary')
+# # plt.imshow((np.abs(E_2D)).T)
+# # plt.colorbar()
+# plt.xlabel('x [cm]')
+# plt.ylabel('y [cm]')
+# plt.title('real($\Psi$) dla dx={}'.format(dx*100))
+# plt.savefig('E_{}x{}cm_dx_{}cm.png'.format(Nx,Ny,dx*100))
 
 
+# plt.style.use('ggplot')
+# plt.figure(figsize=(5,5))
+materiał = 'beton'
+
+plt.figure()
+plt.imshow((np.real(E_2D)).T, cmap='inferno', extent=[-X//2, X//2, -Y//2, Y//2])
+plt.xlabel('x [m]', fontsize=10)
+plt.ylabel('y [m]', fontsize=10)
+plt.title('Część rzeczywista Ψ, bariera na brzegach - {}'.format(materiał), fontsize=10)
+plt.colorbar()
+plt.savefig('./2D/real_4_12_{}'.format(materiał),dpi=600)
+
+plt.figure()
+plt.imshow((np.imag(E_2D)).T, cmap='inferno', extent=[-X//2, X//2, -Y//2, Y//2])
+plt.xlabel('x [m]', fontsize=10)
+plt.ylabel('y [m]', fontsize=10)
+plt.title('Część urojona Ψ, bariera na brzegach - {}'.format(materiał), fontsize=10)
+plt.colorbar()
+plt.savefig('./2D/imag_4_12_{}'.format(materiał),dpi=600)
+
+plt.figure()
+plt.imshow((np.abs(E_2D)).T, cmap='inferno', extent=[-X//2, X//2, -Y//2, Y//2])
+plt.xlabel('x [m]', fontsize=10)
+plt.ylabel('y [m]', fontsize=10)
+plt.title('|Ψ|, bariera na brzegach - {}'.format(materiał), fontsize=10)
+plt.colorbar()
+plt.savefig('./2D/abs_4_12_{}'.format(materiał),dpi=600)
