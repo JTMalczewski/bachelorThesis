@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 import scipy.sparse.linalg as sp
 from scipy.sparse import csc_matrix
 from scipy.sparse.linalg import spsolve
+from matplotlib import cm
+from matplotlib import colors
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 def placeSource(X,Y,f,power):
     Y = Ny - Y
@@ -13,25 +16,23 @@ def placeSource(X,Y,f,power):
 def addContour(material,thickness,GHz,n):
     radius = thickness//2
 
-    wall = generateWall(0,radius,int(Nx),radius,True)
+    wall = generateWall(0,radius//2,int(Nx),radius,True)
     n = addWall(n,wall,GHz,material)
-    printWall(wall)
+    walls = wall
 
     wall = generateWall(0,Ny-radius//2,int(Nx),radius,True)
     n = addWall(n,wall,GHz,material)
-    printWall(wall)
+    walls = np.concatenate((walls,wall))
 
-    wall = generateWall(radius,0,int(Ny),radius,False)
+    wall = generateWall(radius//2,0,int(Ny),radius,False)
     n = addWall(n,wall,GHz,material)
-    printWall(wall)
+    walls = np.concatenate((walls,wall))
 
     wall = generateWall(Nx-radius//2,0,int(Ny),radius,False)
     n = addWall(n,wall,GHz,material)
-    printWall(wall)
-    return n
+    walls = np.concatenate((walls,wall))
 
-def printWall(wall):
-    plt.scatter(np.array(wall).T[0],np.array(wall).T[1], color='black', alpha=0.2, marker=',',lw=0, s=1)
+    return n, walls
 
 def generateWall(startPointX, startPointY, length, thickness, xAxes):
     wall = []
@@ -97,6 +98,31 @@ def generateMatrix(Nx,Ny,dx,dy,n,k):
 
     return temp_var, temp_x, temp_y
 
+def printAbs(E_2D,GHz,X,Y,material):
+    plt.figure()
+    ax = plt.gca()
+    im = ax.imshow((np.abs(E_2D)).T, cmap=newcmp, extent=[-X//2, X//2, -Y//2, Y//2])
+    plt.xlabel('x [m]', fontsize=10)
+    plt.ylabel('y [m]', fontsize=10)
+    plt.title('|Ψ| dla f={:1} GHz, bariera - {}'.format(GHz,material), fontsize=13)
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes("right", size="5%", pad=0.05)
+    plt.colorbar(im, cax=cax)
+    return ax
+
+def calculateFild(Nx,Ny,dx,dy,n,k,f):
+    var, coordinates_x, coordinates_y = generateMatrix(Nx,Ny,dx,dy,n,k)
+    matrix_sparse = csc_matrix((var,(coordinates_x, coordinates_y)))
+    E_1D = spsolve(matrix_sparse,f)
+    E_2D = np.reshape(E_1D,(Nx,Ny))
+    return E_2D
+
+def printWalls(walls,dx,ax):
+    ax.scatter(np.array(walls).T[0]*dx - X//2,np.array(walls).T[1]*dx -Y//2, color='cornflowerblue', marker=',',lw=0, s=1)
+
+def saveGraph(GHz,X,Y,dx,material,room):
+    plt.savefig('./2D_{:1}/abs_{:1}_{:1}_{:3}_{}_{}.png'.format(GHz,X,Y,dx,material,room),dpi=600)
+
 X = 12 #m
 Y = 4 #m
 dx = 0.01 #m
@@ -114,59 +140,80 @@ wood =      (1.99,  0,  0.0047, 1.0718)
 glass =     (6.31,  0,  0.0036, 1.3394)
 metal =     (1,     0,  1e7,    0)
 
-placeSource(Nx//2,Ny//2,f,1000)
-# placeSource(Nx//2+1,Ny//2,f,1000)
-# placeSource(Nx//2,Ny//2+1,f,1000)
-# placeSource(Nx//2+1,Ny//2+1,f,1000)
+binary = cm.get_cmap('bwr', 128)
+newcolors = binary(np.linspace(0, 1, 128))
+for i in range(len(newcolors)//2):
+    newcolors[i] = [
+        (2*i/128)**0.5,
+        (2*i/128)**0.5,
+        (2*i/128)**0.5,
+        1]
+newcmp = colors.ListedColormap(newcolors)
 
-addContour(concrete,20,2.4,n)
+material = 'cegła'
+room = 'corridor_up'
+GHz = 5.2
 
-wall = generateWall(Nx//3,0,Ny//3*2,5,False)
+match material:
+    case "beton":
+        material_factors = concrete 
+    case "cegła":
+        material_factors = brick
+    case "drewno":
+        material_factors = wood
+    case "szkło":
+        material_factors = glass
+    case "metal":
+        material_factors = metal
+    case _:
+        material_factors = 0
+
+f = placeSource(Nx//8,3*Ny//4,f,100000)
+n, walls = addContour(material_factors,20,GHz,n)
+
+
+
+wall = generateWall(0,Ny//2,Nx//10,5,True)
 n = addWall(n,wall,2.4,concrete)
-printWall(wall)
+walls = np.concatenate((walls,wall))
 
-wall = generateWall(Nx//3*2,Ny//3,Ny//3*2,5,False)
+wall = generateWall(2*Nx//10,Ny//2,Nx//10,5,True)
 n = addWall(n,wall,2.4,concrete)
-printWall(wall)
+walls = np.concatenate((walls,wall))
 
-var, coordinates_x, coordinates_y = generateMatrix(Nx,Ny,dx,dy,n,k)
-matrix_sparse = csc_matrix((var,(coordinates_x, coordinates_y)))
-E_1D = spsolve(matrix_sparse,f)
-E_2D = np.reshape(E_1D,(Nx,Ny))
+wall = generateWall(4*Nx//10,Ny//2,Nx//10,5,True)
+n = addWall(n,wall,2.4,concrete)
+walls = np.concatenate((walls,wall))
 
-# plt.imshow((np.real(E_2D)).T, 'binary')
-# # plt.imshow((np.abs(E_2D)).T)
-# # plt.colorbar()
-# plt.xlabel('x [cm]')
-# plt.ylabel('y [cm]')
-# plt.title('real($\Psi$) dla dx={}'.format(dx*100))
-# plt.savefig('E_{}x{}cm_dx_{}cm.png'.format(Nx,Ny,dx*100))
+wall = generateWall(6*Nx//10,Ny//2,Nx//10,5,True)
+n = addWall(n,wall,2.4,concrete)
+walls = np.concatenate((walls,wall))
+
+wall = generateWall(8*Nx//10,Ny//2,Nx//10,5,True)
+n = addWall(n,wall,2.4,concrete)
+walls = np.concatenate((walls,wall))
 
 
-# plt.style.use('ggplot')
-# plt.figure(figsize=(5,5))
-materiał = 'beton'
 
-plt.figure()
-plt.imshow((np.real(E_2D)).T, cmap='inferno', extent=[-X//2, X//2, -Y//2, Y//2])
-plt.xlabel('x [m]', fontsize=10)
-plt.ylabel('y [m]', fontsize=10)
-plt.title('Część rzeczywista Ψ, bariera na brzegach - {}'.format(materiał), fontsize=10)
-plt.colorbar()
-plt.savefig('./2D/real_4_12_{}'.format(materiał),dpi=600)
+wall = generateWall(2*Nx//10,0,Ny//2,5,False)
+n = addWall(n,wall,2.4,concrete)
+walls = np.concatenate((walls,wall))
 
-plt.figure()
-plt.imshow((np.imag(E_2D)).T, cmap='inferno', extent=[-X//2, X//2, -Y//2, Y//2])
-plt.xlabel('x [m]', fontsize=10)
-plt.ylabel('y [m]', fontsize=10)
-plt.title('Część urojona Ψ, bariera na brzegach - {}'.format(materiał), fontsize=10)
-plt.colorbar()
-plt.savefig('./2D/imag_4_12_{}'.format(materiał),dpi=600)
+wall = generateWall(4*Nx//10,0,Ny//2,5,False)
+n = addWall(n,wall,2.4,concrete)
+walls = np.concatenate((walls,wall))
 
-plt.figure()
-plt.imshow((np.abs(E_2D)).T, cmap='inferno', extent=[-X//2, X//2, -Y//2, Y//2])
-plt.xlabel('x [m]', fontsize=10)
-plt.ylabel('y [m]', fontsize=10)
-plt.title('|Ψ|, bariera na brzegach - {}'.format(materiał), fontsize=10)
-plt.colorbar()
-plt.savefig('./2D/abs_4_12_{}'.format(materiał),dpi=600)
+wall = generateWall(6*Nx//10,0,Ny//2,5,False)
+n = addWall(n,wall,2.4,concrete)
+walls = np.concatenate((walls,wall))
+
+wall = generateWall(8*Nx//10,0,Ny//2,5,False)
+n = addWall(n,wall,2.4,concrete)
+walls = np.concatenate((walls,wall))
+
+
+
+E_2D = calculateFild(Nx,Ny,dx,dy,n,k,f)
+ax = printAbs(E_2D,GHz ,X ,Y, material)
+printWalls(walls,dx,ax)
+saveGraph(GHz,X,Y,dx,material,room)
