@@ -118,7 +118,7 @@ def calculateFild(Nx,Ny,dx,dy,n,k,f):
     return E_2D
 
 def printWalls(walls,dx,ax):
-    ax.scatter(np.array(walls).T[0]*dx - X//2,np.array(walls).T[1]*dx -Y//2, color='cornflowerblue', marker=',',lw=0, s=1)
+    ax.scatter(np.array(walls).T[0]*dx - X//2,-(np.array(walls).T[1]*dx - Y//2), color='cornflowerblue', marker=',',lw=0, s=1)
 
 def saveGraph(GHz,X,Y,dx,material,room):
     plt.savefig('./2D_{:1}/abs_{:1}_{:1}_{:3}_{}_{}.png'.format(GHz,X,Y,dx,material,room),dpi=600)
@@ -152,7 +152,7 @@ newcmp = colors.ListedColormap(newcolors)
 
 material = 'cegła'
 room = 'corridor_up'
-GHz = 5.2
+GHz = 2.4
 
 match material:
     case "beton":
