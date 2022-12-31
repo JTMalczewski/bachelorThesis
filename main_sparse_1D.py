@@ -74,44 +74,57 @@ metal =     (1,     0,  1e7,    0)
 # plt.savefig('./1D/test', dpi=600)
 
 def printBoth(E_1D, material, GHz):
+
     plt.style.use('ggplot')
+
     plt.figure(figsize=(10,5))
-    plt.plot(np.imag(E_1D), label='Część urojona symulowanej fukcji falowej')
-    plt.plot(np.real(E_1D), label='Część rzeczywistej symulowanej fukcji falowej')
-    plt.yticks(np.arange(-1e-4, 1.1e-4, 5e-5))
-    plt.title('Ψ dla f={:1} GHz oraz barier na brzegach - {}'.format(GHz, material), fontsize=15)
-    plt.xlabel('Symulowana przestrzeń 1D [mm]')
-    plt.ylabel('real(Ψ), imag(Ψ) [-]')
+    plt.plot(np.arange(-len(E_1D)/2,len(E_1D)/2)/10,np.imag(E_1D), label='Część urojona symulowanej fukcji falowej')
+    plt.plot(np.arange(-len(E_1D)/2,len(E_1D)/2)/10,np.real(E_1D), label='Część rzeczywistej symulowanej fukcji falowej')
+    # plt.yticks(np.arange(-1e-4, 1.1e-4, 5e-5))
+    plt.title('Ψ dla f={:1} GHz oraz barierą na brzegach - {}'.format(GHz, material), fontsize=15)
+    plt.xlabel('Symulowana przestrzeń 1D [cm]')
+    plt.ylabel('Wartość funkcji falowej [-]')
+    plt.xlim(-50,50)
     ax = plt.gca()
-    fig = plt.gcf()
     ax.ticklabel_format(axis='y',useMathText=True)
     ax.legend(bbox_to_anchor=[0.02, 0.05], loc='lower left')
-    plt.savefig('./1D_{:1}/barier_20_20_{}'.format(GHz,material), dpi=600)
+    plt.savefig('./1D_{}/barier_20_20_{}'.format(GHz,material), dpi=300)
+
+    plt.figure(figsize=(10,5))
+    plt.plot(np.arange(-len(E_1D)/2,len(E_1D)/2)/10,np.abs(E_1D), label='Moduł symulowanej fukcji falowej')
+    plt.title('|Ψ| dla f={:1} GHz oraz barierą na brzegach - {}'.format(GHz, material), fontsize=15)
+    plt.xlabel('Symulowana przestrzeń 1D [cm]')
+    plt.ylabel('Wartość funkcji falowej [-]')
+    plt.xlim(-50,50)
+    ax = plt.gca()
+    ax.ticklabel_format(axis='y',useMathText=True)
+    ax.legend(bbox_to_anchor=[0.02, 0.05], loc='lower left')
+    plt.savefig('./1D_{}/barier_20_20_abs_{}'.format(GHz,material), dpi=300)
 
 def generateGraph(GHz, material, X, E_0, dx):
     match material:
         case "beton":
             temp = concrete 
-        case "cegła":
+        case "cegla":
             temp = brick
         case "drewno":
             temp = wood
-        case "szkło":
+        case "szklo":
             temp = glass
         case "metal":
             temp = metal
         case _:
             temp = 0
 
-    N = int(X/dx) +1
+    N = int((X+10)/dx) +1
     lenght = 299792458/(GHz * 1e9)
     k = np.pi*2/lenght                          #2pi/długość fali
     n = np.ones(N,dtype=np.csingle)
     f = np.zeros(N,dtype=np.csingle)
 
     f[N//2] = E_0
-    n = addWall(n,range(200),GHz,temp)
-    n = addWall(n,range(-200,0),GHz,temp)
+    n = addWall(n,range(N//2-300),GHz,temp)
+    n = addWall(n,range(-(N//2-300),0),GHz,temp)
 
     var, coordinates_x, coordinates_y = generateMatrix(N,dx,n,k)
     matrix_sparse = csc_matrix((var,(coordinates_x, coordinates_y)))
@@ -122,15 +135,15 @@ def generateGraph(GHz, material, X, E_0, dx):
 
 generateGraph(2.4, "beton", 1, 10, 0.001)
 generateGraph(2.4, "drewno", 1, 10, 0.001)
-generateGraph(2.4, "cegła", 1, 10, 0.001)
+generateGraph(2.4, "cegla", 1, 10, 0.001)
 generateGraph(2.4, "metal", 1, 10, 0.001)
-generateGraph(2.4, "szkło", 1, 10, 0.001)
+generateGraph(2.4, "szklo", 1, 10, 0.001)
 
-generateGraph(5.2, "beton", 1, 10, 0.001)
-generateGraph(5.2, "drewno", 1, 10, 0.001)
-generateGraph(5.2, "cegła", 1, 10, 0.001)
-generateGraph(5.2, "metal", 1, 10, 0.001)
-generateGraph(5.2, "szkło", 1, 10, 0.001)
+generateGraph(6, "beton", 1, 10, 0.001)
+generateGraph(6, "drewno", 1, 10, 0.001)
+generateGraph(6, "cegla", 1, 10, 0.001)
+generateGraph(6, "metal", 1, 10, 0.001)
+generateGraph(6, "szklo", 1, 10, 0.001)
 
 
 # plt.style.use('ggplot')

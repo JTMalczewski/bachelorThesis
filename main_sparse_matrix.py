@@ -104,9 +104,9 @@ def printAbs(E_2D,GHz,X,Y,material):
     im = ax.imshow((np.abs(E_2D)).T, cmap=newcmp, extent=[-X//2, X//2, -Y//2, Y//2])
     plt.xlabel('x [m]', fontsize=10)
     plt.ylabel('y [m]', fontsize=10)
-    plt.title('|Ψ| dla f={:1} GHz, {}, dx={}'.format(GHz,material,dx))
-    plt.xlim(-1.5,1.5)
-    plt.ylim(-4.5,4.5)
+    plt.title('|Ψ| dla f={:1} GHz, {}, dx={}'.format(GHz,material,dx), fontsize=13)
+    plt.xlim(-1.75,1.75)
+    plt.ylim(-1.75,1.75)
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="5%", pad=0.05)
     plt.colorbar(im, cax=cax)
@@ -115,24 +115,33 @@ def printAbs(E_2D,GHz,X,Y,material):
 def calculateFild(Nx,Ny,dx,dy,n,k,f):
     var, coordinates_x, coordinates_y = generateMatrix(Nx,Ny,dx,dy,n,k)
     matrix_sparse = csc_matrix((var,(coordinates_x, coordinates_y)))
-    E_1D = spsolve(matrix_sparse,f)
-    E_2D = np.reshape(E_1D,(Nx,Ny))
-    return E_2D
+    
+    plt.imshow(abs(matrix_sparse.toarray()),'binary')
+    plt.colorbar()
+    plt.title('Macierz układu równań w 2D dla $N_x = 6$')
+    plt.xlabel('Index macierzy [-]')
+    plt.ylabel('Index macierzy [-]')
+    plt.savefig('./macierz_układu_równań_2D.png', dpi=300)
+
+    # E_1D = spsolve(matrix_sparse,f)
+    # E_2D = np.reshape(E_1D,(Nx,Ny))
+    # return E_2D
 
 def printWalls(walls,dx,ax):
-    # print('no walls this time bro')
-    print('I got you bro')
-    ax.scatter(np.array(walls).T[0]*dx - X//2,-(np.array(walls).T[1]*dx - Y//2), color=[0.2,0.2,0.8,0.2], marker=',', s=1)
+    print('no walls')
+    # ax.scatter(np.array(walls).T[0]*dx - X//2,-(np.array(walls).T[1]*dx - Y//2), color='cornflowerblue', marker=',',lw=0, s=1)
 
 def saveGraph(GHz,X,Y,dx,material,room):
-    plt.savefig('./real/{}_{:3}_{}_{}.png'.format(GHz,dx,material,room),bbox_inches = 'tight',dpi=300)
+    plt.savefig('./2D_{:1}/abs_{:1}_{:1}_{:3}_{}_{}.png'.format(GHz,X,Y,dx,material,room),dpi=300)
 
 X = 4 #m
-Y = 10 #m
+Y = 4 #m
 dx = 0.01 #m
 dy = 0.01 #m
-Ny = int(Y/dy)
-Nx = int(X/dx)
+# Ny = int(Y/dy)
+# Nx = int(X/dx)
+Ny = 6
+Nx = 6
 k = 6.28/0.125
 n = np.ones((Nx,Ny),dtype=np.csingle)
 f = np.zeros((Nx*Ny),dtype=np.csingle)
@@ -155,7 +164,7 @@ for i in range(len(newcolors)//2):
 newcmp = colors.ListedColormap(newcolors)
 
 material = 'beton'
-room = 'corridor_down'
+room = 'box'
 GHz = 2.4
 
 match material:
@@ -172,39 +181,19 @@ match material:
     case _:
         material_factors = 0
 
-f = placeSource(3*Nx//4,Ny//10,f,100000)
-n, walls = addContour(material_factors,120,GHz,n)
+# f = placeSource(3*Nx//8,3*Ny//8,f,100000)
+# n, walls = addContour(material_factors,Nx//4,GHz,n)
 
-
-
-
-wall = generateWall(Nx//2,0,
-                    Ny//2-Ny//20,5,False)
-
-n = addWall(n,wall,2.4,material_factors)
-walls = np.concatenate((walls,wall))
-
-wall = generateWall(Nx//2,Ny//2,
-                    Ny//2-Ny//10,5,False)
-
-n = addWall(n,wall,2.4,material_factors)
-walls = np.concatenate((walls,wall))
-
-
-
-wall = generateWall(0,Ny//2,
-                    Nx//2,5,True)
-
-n = addWall(n,wall,2.4,material_factors)
-walls = np.concatenate((walls,wall))
-
-# wall = generateWall(0,Ny-Ny//20,
-#                     Nx//2,5,True)
-
-# n = addWall(n,wall,2.4,material_factors)
+# wall = generateWall(0,Ny//4,Nx//2,Ny//2,True)
+# n = addWall(n,wall,2.4,concrete)
 # walls = np.concatenate((walls,wall))
 
+
 E_2D = calculateFild(Nx,Ny,dx,dy,n,k,f)
-ax = printAbs(E_2D,GHz ,X ,Y, material)
-printWalls(walls,dx,ax)
-saveGraph(GHz,X,Y,dx,material,room)
+# ax = printAbs(E_2D,GHz ,X ,Y, material)
+
+# printWalls(walls,dx,ax)
+# saveGraph(GHz,X,Y,dx,material,room)
+
+# generateWall(startPointX, startPointY, length, thickness, xAxes):
+
